@@ -1,13 +1,8 @@
 "use strict";
 
-(function (root, factory) {
-  if (typeof module !== "undefined" && module.exports) {
-    module.exports = factory(require("exceljs"), require("./shared/calc"));
-  } else {
-    root.hydraulicExcelExport = factory(root.ExcelJS, root.hydraulicCalc);
-  }
-})(typeof window !== "undefined" ? window : this, function (ExcelJS, hydraulicCalc) {
-const { num, clampFloorCount, calcBlRow, sectionLabel } = hydraulicCalc;
+(function () {
+const { num, clampFloorCount, calcBlRow, sectionLabel } = window.hydraulicCalc;
+const ExcelJS = window.ExcelJS;
 
 const THIN = { style: "thin" };
 const BORDER_ALL = { top: THIN, left: THIN, bottom: THIN, right: THIN };
@@ -257,5 +252,5 @@ async function buildWorkbook(data) {
   return workbook;
 }
 
-return { buildWorkbook };
-});
+window.hydraulicExcelExport = { buildWorkbook };
+})();

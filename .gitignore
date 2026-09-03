@@ -1,5 +1,5 @@
 node_modules/
 dist/
-配布用/
 .env
 *.log
+打ち合わせまとめ_*.md

@@ -382,17 +382,12 @@ blTbody.addEventListener("change", handleBlTableChange);
 /* ============================================================
    印刷
    ============================================================ */
-document.getElementById("printBtn").addEventListener("click", async () => {
-  if (!window.electronAPI) {
-    window.print();
-    return;
-  }
-  const result = await window.electronAPI.exportPdf();
-  if (result && result.error) alert("PDF出力に失敗しました: " + result.error);
+document.getElementById("printBtn").addEventListener("click", () => {
+  window.print();
 });
 
 /* ============================================================
-   保存(.sui) / 開く(.sui) / Excel出力(.xlsx)
+   Excel出力(.xlsx)
    ============================================================ */
 function collectFormData() {
   const fixtures = Array.from(fixtureTbody.querySelectorAll("tr")).map((tr) => ({
@@ -482,52 +477,82 @@ function applyFormData(data) {
   recalcBlTable();
 }
 
-if (window.electronAPI) {
-  document.getElementById("saveBtn").addEventListener("click", async () => {
-    const result = await window.electronAPI.saveFile(collectFormData());
-    if (result && result.error) alert("保存に失敗しました: " + result.error);
-  });
-
-  document.getElementById("openBtn").addEventListener("click", async () => {
-    const result = await window.electronAPI.openFile();
-    if (result && result.error) {
-      alert("読込に失敗しました: " + result.error);
-    } else if (result && result.data) {
-      applyFormData(result.data);
-    }
-  });
-
-  document.getElementById("exportExcelBtn").addEventListener("click", async () => {
-    const result = await window.electronAPI.exportExcel(collectFormData());
-    if (result && result.error) alert("Excel出力に失敗しました: " + result.error);
-  });
-} else {
-  ["saveBtn", "openBtn"].forEach((id) => {
-    document.getElementById(id).addEventListener("click", () => {
-      alert("この機能はデスクトップアプリ版でのみ利用できます。");
+document.getElementById("exportExcelBtn").addEventListener("click", async () => {
+  try {
+    const workbook = await hydraulicExcelExport.buildWorkbook(collectFormData());
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     });
-  });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "水理計算書.xlsx";
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    alert("Excel出力に失敗しました: " + err.message);
+  }
+});
 
-  document.getElementById("exportExcelBtn").addEventListener("click", async () => {
-    try {
-      const workbook = await hydraulicExcelExport.buildWorkbook(collectFormData());
-      const buffer = await workbook.xlsx.writeBuffer();
-      const blob = new Blob([buffer], {
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "水理計算書.xlsx";
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      alert("Excel出力に失敗しました: " + err.message);
-    }
-  });
+/* ============================================================
+   自動保存（ブラウザ／デスクトップ共通・localStorage）
+   .sui保存/読込やExcel出力とは別に、入力内容を一定間隔で
+   ブラウザのlocalStorageへ下書き保存し、再読込・再起動時に復元する。
+   ============================================================ */
+const AUTOSAVE_KEY = "hydraulicCalcAutosave";
+const AUTOSAVE_DELAY_MS = 1000;
+const autoSaveStatusEl = document.getElementById("autoSaveStatus");
+let autoSaveTimer = null;
+
+function formatClock(date) {
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
 }
+
+function setAutoSaveStatus(text, statusClass) {
+  if (!autoSaveStatusEl) return;
+  autoSaveStatusEl.textContent = text;
+  autoSaveStatusEl.className = "autosave-status" + (statusClass ? " " + statusClass : "");
+}
+
+function runAutoSave() {
+  try {
+    localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(collectFormData()));
+    setAutoSaveStatus("自動保存済み " + formatClock(new Date()), "saved");
+  } catch (err) {
+    setAutoSaveStatus("自動保存に失敗しました: " + err.message, "error");
+  }
+}
+
+function scheduleAutoSave() {
+  setAutoSaveStatus("編集中…", "pending");
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(runAutoSave, AUTOSAVE_DELAY_MS);
+}
+
+function restoreAutoSave() {
+  let raw;
+  try {
+    raw = localStorage.getItem(AUTOSAVE_KEY);
+  } catch (err) {
+    return;
+  }
+  if (!raw) return;
+
+  try {
+    applyFormData(JSON.parse(raw));
+    setAutoSaveStatus("前回の自動保存を復元しました", "saved");
+  } catch (err) {
+    setAutoSaveStatus("自動保存データの復元に失敗しました: " + err.message, "error");
+  }
+}
+
+document.addEventListener("input", scheduleAutoSave);
+document.addEventListener("change", scheduleAutoSave);
 
 /* 初期計算 */
 rebuildFixtureFloors();
 ensureBlRowCount();
 recalcBlTable();
+restoreAutoSave();

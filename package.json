@@ -1,37 +1,9 @@
 {
   "name": "hydraulic-calc-desktop",
   "version": "1.0.0",
-  "description": "水理計算書作成アプリ（Windowsデスクトップ版）",
-  "main": "main.js",
-  "scripts": {
-    "start": "electron .",
-    "dist": "electron-builder --win",
-    "build:pages": "node scripts/build-pages.js"
-  },
-  "author": "",
-  "license": "UNLICENSED",
+  "description": "水理計算書作成アプリ（ブラウザ版）",
   "private": true,
-  "devDependencies": {
-    "electron": "^31.0.0",
-    "electron-builder": "^24.13.3"
-  },
-  "dependencies": {
-    "exceljs": "^4.4.0"
-  },
-  "build": {
-    "appId": "com.local.hydrauliccalcdesktop",
-    "productName": "水理計算書作成アプリ",
-    "asar": true,
-    "electronLanguages": ["ja"],
-    "files": [
-      "main.js",
-      "preload.js",
-      "excelExport.js",
-      "shared/**/*",
-      "src/**/*"
-    ],
-    "win": {
-      "target": "dir"
-    }
+  "scripts": {
+    "build:pages": "node scripts/build-pages.js"
   }
 }

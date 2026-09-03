@@ -279,6 +279,24 @@ body {
   font-size: 0.95rem;
 }
 
+.autosave-status {
+  margin-top: 10px;
+  font-size: 0.82rem;
+  color: #777;
+}
+
+.autosave-status.pending {
+  color: #a1791a;
+}
+
+.autosave-status.saved {
+  color: #1a6b1a;
+}
+
+.autosave-status.error {
+  color: #a11a1a;
+}
+
 /* 印刷時のみ表示する、表の途中ページ用タイトル行 */
 .print-title-row { display: none; }
 
@@ -306,7 +324,7 @@ body {
     font-size: 9pt;
   }
 
-  .tabs, .app-footer {
+  .tabs, .app-footer, .autosave-status {
     display: none !important;
   }
 

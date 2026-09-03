@@ -107,8 +107,4 @@ const hydraulicCalc = {
   sectionLabel,
 };
 
-if (typeof module !== "undefined" && module.exports) {
-  module.exports = hydraulicCalc;
-} else {
-  window.hydraulicCalc = hydraulicCalc;
-}
+window.hydraulicCalc = hydraulicCalc;
