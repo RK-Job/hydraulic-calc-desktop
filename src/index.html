@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>水利計算書 作成アプリ</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="app-header">
+  <h1>水 理 計 算 書 作 成 ア プ リ</h1>
+  <div class="project-info">
+    <label>工事名称 <input type="text" id="projectName"></label>
+    <label>作成者 <input type="text" id="author"></label>
+    <label>作成日 <input type="date" id="createdDate"></label>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button class="tab-btn active" data-tab="tab-flow">① 設計流量の算定</button>
+  <button class="tab-btn" data-tab="tab-bl">② ＢＬ水理計算書</button>
+</nav>
+
+<!-- ============================================================ -->
+<!-- タブ①：設計流量の算定 -->
+<!-- ============================================================ -->
+<section id="tab-flow" class="tab-panel active">
+  <h2>設 計 流 量 の 算 定</h2>
+
+  <div class="block">
+    <div class="block-title">① 階数・用途規模</div>
+    <div class="inline-fields">
+      階数（<input type="number" id="floorCount" class="short-input" min="1" max="5" step="1" value="3"> 階建て、最大５階）
+    </div>
+    <input type="text" id="condition" class="wide-input" placeholder="例：集合住宅 2LDK 24戸">
+  </div>
+
+  <div class="block">
+    <div class="block-title">② 同時使用を求める</div>
+    <p class="note">・一戸又は一事業所当たりについて表２－４（２０水栓以下）又は表２－１（２１水栓以上：用途毎に算出して合算）により同時使用水栓数を決定する（端数切り上げ）</p>
+    <div class="inline-fields">
+      同時使用水栓数（<input type="number" id="simultaneousFixtures" class="short-input"> 栓）と決定する
+    </div>
+  </div>
+
+  <table class="excel-table" id="fixtureTable">
+    <thead>
+      <tr>
+        <th rowspan="2">用　　　途</th>
+        <th rowspan="2">使用水量<br>(l/分)</th>
+        <th colspan="4" id="useGroupHeader">水栓個数</th>
+        <th rowspan="2">流量(A)<br>(l/分)</th>
+        <th colspan="4" id="simulGroupHeader">同時使用箇所</th>
+        <th rowspan="2">流量(E)<br>(l/分)</th>
+      </tr>
+      <tr id="fixtureFloorHeaderRow">
+        <th>1F</th><th>2F</th><th>3F</th><th>計</th>
+        <th>1F</th><th>2F</th><th>3F</th><th>計</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- 行はJSで生成 -->
+    </tbody>
+    <tfoot>
+      <tr class="total-row" id="fixtureTotalRow">
+        <td>合　　　計</td>
+        <td></td>
+      </tr>
+    </tfoot>
+  </table>
+  <p class="note">＊ここにいう事業所は事務所であって、それ以外はＦＵ単位で別途計算すること。</p>
+
+  <div class="block">
+    <div class="block-title">③ 平均使用流量（ｑ）を求める</div>
+    <div class="formula-row">
+      <span>Ａ（又はＥ）：</span>
+      <span class="calc-box" id="sumA">-</span> l/分 ÷
+      <span class="calc-box" id="sumB">-</span> ＝
+      <span class="calc-box" id="qLmin">-</span> l/分 ÷ 60 ＝
+      <span class="calc-box highlight" id="qLsec">-</span> l/秒　・・・１水栓当たり平均使用流量（ｑ）とする
+    </div>
+  </div>
+
+  <div class="block">
+    <div class="block-title">④ 総流量（Ｑ）を求める</div>
+    <div class="formula-row">
+      平均使用流量（ｑ）
+      <span class="calc-box" id="qLsec2">-</span> l/秒 ×
+      同時使用水栓（<span class="calc-box" id="simultFixtures2">-</span>）＝
+      <span class="calc-box highlight" id="totalQ">-</span> l/秒　・・・同時使用総流量（Ｑ）
+    </div>
+  </div>
+
+  <div class="block result-block">
+    <span class="block-title">∴ 設計流量</span>
+    <span class="calc-box result-value" id="designFlow">-</span> l/秒 と決定する
+  </div>
+
+  <div class="block">
+    <div class="block-title">⑤ メーター口径の判定（25mm以下）</div>
+    <p class="note">※ 大分市上下水道局「給水装置テキスト2017」表２－１３（同時使用水栓数及び同時使用水量における適正メーター口径）に基づく簡易判定。40mm以上は表２－１４（受水槽式）により個別に判定してください。</p>
+    <div class="formula-row">
+      同時使用水栓数 <span class="calc-box" id="meterTaps">-</span> 栓　／
+      同時使用水量 <span class="calc-box" id="meterQLmin">-</span> l/分　→
+      推奨メーター口径　<span class="calc-box highlight" id="meterDiameter">-</span>
+    </div>
+    <p class="note" id="meterNote"></p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- タブ②：ＢＬ水理計算書 -->
+<!-- ============================================================ -->
+<section id="tab-bl" class="tab-panel">
+  <h2>水 理 計 算 書 ②（戸数から同時使用水量を予測する算定式及びＢＬ基準）</h2>
+  <p class="note">口径50mm以下はウエストン公式、口径75mm以上はヘーゼン・ウィリアムス公式による。</p>
+  <p class="note">※ 器具換算長は大分市上下水道局「給水装置テキスト2017」第2章第5節 表２－１１に基づく（口径13〜100mm）。</p>
+  <p class="note">※「戸数から算定」欄に給水戸数を入力すると、Ｑ＝42N<sup>0.33</sup>（9戸以下）／Ｑ＝19N<sup>0.67</sup>（10〜600戸未満）（Ｎ：戸数、Ｑ：l/分）により同時使用水量を計算し、その区間の流量(L/S)欄に自動反映します（優良住宅部品認定基準ＢＬ規格）。</p>
+
+  <div class="table-scroll">
+  <table class="excel-table bl-table" id="blTable">
+    <thead>
+      <tr class="print-title-row">
+        <th colspan="20">水理計算書②（戸数から同時使用水量を予測する算定式及びＢＬ基準）　工事名称：<span id="printProjectName"></span></th>
+      </tr>
+      <tr>
+        <th rowspan="3">区間</th>
+        <th rowspan="3">口径<br>(mm)</th>
+        <th rowspan="3">流量<br>(L/S)</th>
+        <th rowspan="3">戸数から算定<br>(任意・戸)</th>
+        <th rowspan="3">実長<br>(m)</th>
+        <th colspan="12">器 具 換 算 長（ｍ）</th>
+        <th rowspan="3">小計<br>(m)</th>
+        <th rowspan="3">動水勾配<br>Ｉ</th>
+        <th rowspan="3">損失水頭<br>ｈ(ｍ)</th>
+      </tr>
+      <tr>
+        <th colspan="2">給水栓</th>
+        <th colspan="2">割丁字管</th>
+        <th colspan="2">止水栓</th>
+        <th colspan="2">量水器</th>
+        <th colspan="2">逆止弁</th>
+        <th colspan="2">仕切弁</th>
+      </tr>
+      <tr>
+        <th>個数</th><th>換算長</th>
+        <th>個数</th><th>換算長</th>
+        <th>個数</th><th>換算長</th>
+        <th>個数</th><th>換算長</th>
+        <th>個数</th><th>換算長</th>
+        <th>個数</th><th>換算長</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- 行はJSで生成（区間①～⑳） -->
+    </tbody>
+    <tfoot>
+      <tr class="total-row">
+        <td colspan="16">損失水頭 小計</td>
+        <td colspan="2" class="calc" id="blSubtotal">-</td>
+      </tr>
+      <tr class="total-row">
+        <td colspan="16">安全率(10%)加算後</td>
+        <td colspan="2" class="calc highlight" id="blWithSafety">-</td>
+      </tr>
+    </tfoot>
+  </table>
+  </div>
+
+  <div class="block judge-block">
+    <div class="block-title">判定：（最小動水頭）≧（損失水頭）＋（最高位の給水栓高）＋（最低確保水頭）</div>
+    <div class="formula-row">
+      最小動水頭
+      <input type="number" id="minHead" class="short-input" value="20"> m　≧
+      損失水頭 <span class="calc-box" id="lossHead">-</span> ＋
+      最高位給水栓高 <input type="number" id="maxFixtureHeight" class="short-input" value="10"> m ＋
+      最低確保水頭 <input type="number" id="minRequiredHead" class="short-input" value="5"> m ＝
+      <span class="calc-box" id="judgeSum">-</span> m
+      <span id="judgeResult" class="judge-result">-</span>
+    </div>
+  </div>
+</section>
+
+<footer class="app-footer">
+  <button id="saveBtn">保存 (.sui)</button>
+  <button id="openBtn">開く (.sui)</button>
+  <button id="exportExcelBtn">Excel出力 (.xlsx)</button>
+  <button id="printBtn">PDF出力</button>
+</footer>
+
+<script src="../shared/calc.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

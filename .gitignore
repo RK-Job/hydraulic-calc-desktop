@@ -1,0 +1,5 @@
+node_modules/
+dist/
+配布用/
+.env
+*.log

@@ -1,0 +1,481 @@
+:root {
+  --border-color: #333;
+  --header-bg: #dfe8f2;
+  --input-bg: #ffffff;
+  --calc-bg: #f0f0f0;
+  --highlight-bg: #fff6c8;
+  --accent: #1e4f8c;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: "Yu Gothic", "Meiryo", "MS PGothic", sans-serif;
+  margin: 0;
+  padding: 0 16px 60px;
+  background: #f5f6f8;
+  color: #1a1a1a;
+}
+
+.app-header {
+  padding: 16px 0 8px;
+  border-bottom: 3px solid var(--accent);
+  margin-bottom: 8px;
+}
+
+.app-header h1 {
+  font-size: 1.4rem;
+  text-align: center;
+  letter-spacing: 0.15em;
+  margin: 0 0 12px;
+  color: var(--accent);
+}
+
+.project-info {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  justify-content: center;
+  font-size: 0.9rem;
+}
+
+.project-info input {
+  margin-left: 4px;
+  padding: 4px 6px;
+  border: 1px solid #aaa;
+  border-radius: 3px;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin: 12px 0;
+}
+
+.tab-btn {
+  padding: 10px 20px;
+  border: 1px solid var(--accent);
+  background: #fff;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 0.95rem;
+  border-radius: 6px 6px 0 0;
+}
+
+.tab-btn.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.tab-panel {
+  display: none;
+  background: #fff;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 0 6px 6px 6px;
+}
+
+.tab-panel.active {
+  display: block;
+}
+
+.tab-panel h2 {
+  text-align: center;
+  letter-spacing: 0.2em;
+  font-size: 1.15rem;
+  margin-top: 0;
+}
+
+.block {
+  margin: 18px 0;
+}
+
+.block-title {
+  font-weight: bold;
+  margin-bottom: 6px;
+  color: var(--accent);
+}
+
+.note {
+  font-size: 0.82rem;
+  color: #555;
+  margin: 4px 0;
+}
+
+.wide-input {
+  width: 100%;
+  max-width: 520px;
+  padding: 6px 8px;
+  border: 1px solid #aaa;
+  border-radius: 3px;
+}
+
+.short-input {
+  width: 64px;
+  padding: 4px 6px;
+  border: 1px solid #aaa;
+  border-radius: 3px;
+  text-align: right;
+}
+
+.inline-fields {
+  font-size: 0.9rem;
+}
+
+/* --- Excel風テーブル --- */
+.excel-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.82rem;
+}
+
+.excel-table th, .excel-table td {
+  border: 1px solid var(--border-color);
+  padding: 4px 5px;
+  text-align: center;
+}
+
+.excel-table thead th {
+  background: var(--header-bg);
+}
+
+.excel-table tbody td:first-child {
+  text-align: left;
+  white-space: nowrap;
+}
+
+.excel-table input {
+  width: 100%;
+  min-width: 40px;
+  border: none;
+  background: var(--input-bg);
+  text-align: right;
+  font-size: 0.82rem;
+  padding: 2px;
+}
+
+.excel-table input:focus {
+  outline: 2px solid var(--accent);
+  background: #eaf2ff;
+}
+
+.excel-table select {
+  width: 100%;
+  border: none;
+  background: var(--input-bg);
+  text-align: center;
+  font-size: 0.82rem;
+  padding: 2px;
+}
+
+.excel-table select:focus {
+  outline: 2px solid var(--accent);
+  background: #eaf2ff;
+}
+
+.project-info input[type="date"]::-webkit-calendar-picker-indicator {
+  padding: 0;
+  margin-left: 2px;
+}
+
+.excel-table td.calc,
+.excel-table input.calc {
+  background: var(--calc-bg);
+  color: #333;
+}
+
+.excel-table tbody td.calc {
+  background: var(--calc-bg);
+}
+
+.total-row td {
+  font-weight: bold;
+  background: var(--header-bg);
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.bl-table {
+  min-width: 1100px;
+}
+
+.formula-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 0.92rem;
+}
+
+.calc-box {
+  display: inline-block;
+  min-width: 56px;
+  padding: 4px 8px;
+  background: var(--calc-bg);
+  border: 1px solid #999;
+  border-radius: 3px;
+  text-align: center;
+  font-weight: bold;
+}
+
+.calc-box.highlight {
+  background: var(--highlight-bg);
+  border-color: #cba500;
+}
+
+.result-block {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+  background: #eef4ff;
+  border: 2px solid var(--accent);
+  border-radius: 6px;
+}
+
+.result-value {
+  font-size: 1.3rem;
+  min-width: 90px;
+}
+
+.judge-block {
+  margin-top: 20px;
+  padding: 14px;
+  background: #f9f9f9;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.judge-result {
+  font-weight: bold;
+  padding: 3px 10px;
+  border-radius: 3px;
+}
+
+.judge-result.ok {
+  background: #d7f2d7;
+  color: #1a6b1a;
+}
+
+.judge-result.ng {
+  background: #f7d7d7;
+  color: #a11a1a;
+}
+
+.app-footer {
+  text-align: center;
+  margin-top: 24px;
+}
+
+.app-footer button {
+  padding: 10px 24px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+/* 印刷時のみ表示する、表の途中ページ用タイトル行 */
+.print-title-row { display: none; }
+
+@page {
+  size: A4 portrait;
+  margin: 16mm 15mm;
+}
+
+/* タブ②（ＢＬ水理計算書）は列数が多いためA4横向きで印刷する */
+@page bl-page {
+  size: A4 landscape;
+  margin: 13mm 11mm;
+}
+
+@media print {
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  html, body {
+    background: #fff;
+    padding: 0;
+    margin: 0;
+    font-size: 9pt;
+  }
+
+  .tabs, .app-footer {
+    display: none !important;
+  }
+
+  .app-header {
+    padding: 0 0 4px;
+    margin-bottom: 6px;
+    border-bottom-width: 2px;
+  }
+
+  .app-header h1 {
+    font-size: 13pt;
+    margin-bottom: 6px;
+    letter-spacing: 0.1em;
+  }
+
+  .project-info {
+    font-size: 8pt;
+    gap: 14px;
+  }
+
+  .project-info input {
+    padding: 1px 3px;
+    border-color: #999;
+  }
+
+  .tab-panel {
+    display: block !important;
+    background: #fff;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    page-break-after: always;
+    break-after: page;
+  }
+
+  .tab-panel:last-of-type {
+    page-break-after: auto;
+    break-after: auto;
+  }
+
+  .tab-panel h2 {
+    font-size: 11pt;
+    margin: 2px 0 6px;
+    letter-spacing: 0.1em;
+  }
+
+  .block {
+    margin: 5px 0;
+  }
+
+  .block-title {
+    font-size: 9pt;
+    margin-bottom: 2px;
+  }
+
+  .note {
+    font-size: 6.5pt;
+    margin: 1px 0;
+    color: #444;
+  }
+
+  .inline-fields {
+    font-size: 8pt;
+  }
+
+  .formula-row {
+    font-size: 8.5pt;
+    gap: 4px;
+  }
+
+  .calc-box {
+    min-width: 38px;
+    padding: 1px 5px;
+  }
+
+  .short-input {
+    width: 44px;
+    padding: 1px 3px;
+  }
+
+  .wide-input {
+    padding: 2px 4px;
+  }
+
+  .result-block {
+    padding: 6px 8px;
+    margin: 6px 0;
+  }
+
+  .result-value {
+    font-size: 11pt;
+    min-width: 70px;
+  }
+
+  .judge-block {
+    margin-top: 6px;
+    padding: 6px 8px;
+  }
+
+  /* --- タブ①：設計流量の算定（A4縦1ページに収める） --- */
+  #tab-flow .excel-table {
+    font-size: 7.3pt;
+  }
+
+  #tab-flow .excel-table th,
+  #tab-flow .excel-table td {
+    padding: 1.5px 2px;
+  }
+
+  /* --- タブ②：ＢＬ水理計算書（A4横・複数ページ対応） --- */
+  #tab-bl {
+    page: bl-page;
+  }
+
+  .table-scroll {
+    overflow: visible;
+  }
+
+  .bl-table {
+    min-width: 0;
+    width: 100%;
+    font-size: 6.8pt;
+  }
+
+  .bl-table th,
+  .bl-table td {
+    padding: 1px 2px;
+  }
+
+  /* 表の見出し・タイトルをページをまたいでも各ページ先頭に繰り返し表示 */
+  .excel-table thead {
+    display: table-header-group;
+  }
+
+  /* table-footer-group は余白があってもフッターを次ページへ分離するため通常の行として流す */
+  .excel-table tfoot {
+    display: table-row-group;
+  }
+
+  .excel-table tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .print-title-row {
+    display: table-row;
+  }
+
+  .print-title-row th {
+    background: var(--header-bg);
+    font-size: 8.5pt;
+    font-weight: bold;
+    text-align: left;
+    padding: 4px 6px;
+    border: 1px solid var(--border-color);
+  }
+
+  /* 印刷時、select要素はブラウザ標準の矢印を消してテキストのみに見せる */
+  .excel-table select {
+    appearance: none;
+    -webkit-appearance: none;
+    border: none;
+    background: transparent;
+    padding: 0;
+    font-size: inherit;
+  }
+
+  /* 印刷時、日付入力のカレンダーアイコンを消す */
+  .project-info input[type="date"]::-webkit-calendar-picker-indicator {
+    display: none;
+  }
+}
