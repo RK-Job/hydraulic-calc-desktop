@@ -28,5 +28,6 @@ html = html
   .replace('src="../shared/calc.js"', 'src="calc.js"')
   .replace('src="../excelExport.js"', 'src="excelExport.js"');
 fs.writeFileSync(path.join(docs, "index.html"), html, "utf-8");
+fs.writeFileSync(path.join(docs, "CNAME"), "suiri.yonda-key.com\n", "utf-8");
 
 console.log("docs/ を再生成しました。");
