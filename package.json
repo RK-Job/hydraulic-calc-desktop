@@ -5,7 +5,8 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "dist": "electron-builder --win"
+    "dist": "electron-builder --win",
+    "build:pages": "node scripts/build-pages.js"
   },
   "author": "",
   "license": "UNLICENSED",
