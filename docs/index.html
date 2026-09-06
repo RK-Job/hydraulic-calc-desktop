@@ -20,6 +20,7 @@
 <nav class="tabs">
   <button class="tab-btn active" data-tab="tab-flow">① 設計流量の算定</button>
   <button class="tab-btn" data-tab="tab-bl">② ＢＬ水理計算書</button>
+  <button class="tab-btn" data-tab="tab-pump">③ ポンプ算定</button>
 </nav>
 
 <!-- ============================================================ -->
@@ -178,6 +179,68 @@
       最低確保水頭 <input type="number" id="minRequiredHead" class="short-input" value="5"> m ＝
       <span class="calc-box" id="judgeSum">-</span> m
       <span id="judgeResult" class="judge-result">-</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- タブ③：ポンプ算定 -->
+<!-- ============================================================ -->
+<section id="tab-pump" class="tab-panel">
+  <h2>ポ ン プ 算 定</h2>
+  <p class="note">①・②の計算結果を流用して、ポンプの全揚程・必要流量を算出します。算出値をもとに、メーカーの選定表（性能曲線）で機種を選定してください。</p>
+
+  <div class="block">
+    <div class="block-title">① 必要流量（Ｑ）の決定</div>
+    <div class="inline-fields">
+      <label><input type="radio" name="pumpFlowSource" id="pumpFlowSrcDesign" value="design" checked>
+        タブ①の設計流量を使う（<span class="calc-box" id="pumpFlowDesignPreview">-</span> l/秒）</label>
+    </div>
+    <div class="inline-fields">
+      <label><input type="radio" name="pumpFlowSource" id="pumpFlowSrcBl" value="bl">
+        タブ②の区間①流量を使う（<span class="calc-box" id="pumpFlowBlPreview">-</span> l/秒）</label>
+    </div>
+    <div class="inline-fields">
+      <label><input type="radio" name="pumpFlowSource" id="pumpFlowSrcManual" value="manual">
+        手入力する（<input type="number" id="pumpFlowManual" class="short-input" step="0.001" min="0"> l/秒）</label>
+    </div>
+  </div>
+
+  <div class="block">
+    <div class="block-title">② 損失水頭（配管・器具）の決定</div>
+    <div class="inline-fields">
+      <label><input type="checkbox" id="pumpLossFromBl" checked>
+        タブ②の損失水頭（安全率込み）を使う（<span class="calc-box" id="pumpLossBlPreview">-</span> m）</label>
+    </div>
+    <div class="inline-fields">
+      チェックを外して手入力　損失水頭　<input type="number" id="pumpLossManual" class="short-input" step="0.01" min="0" value="0"> m
+    </div>
+  </div>
+
+  <div class="block">
+    <div class="block-title">③ 実揚程・吐出側必要水頭・余裕率</div>
+    <div class="inline-fields">
+      実揚程（吸込〜吐出の高低差）　<input type="number" id="pumpStaticHead" class="short-input" step="0.1" min="0" value="0"> m
+    </div>
+    <div class="inline-fields">
+      吐出側必要水頭（末端で必要な圧力をｍ換算した値）　<input type="number" id="pumpRequiredPressure" class="short-input" step="0.1" min="0" value="0"> m
+    </div>
+    <div class="inline-fields">
+      余裕率　<input type="number" id="pumpMargin" class="short-input" step="1" min="0" value="10"> ％
+    </div>
+  </div>
+
+  <div class="block result-block">
+    <div>
+      <div class="block-title">∴ ポンプ全揚程</div>
+      <div class="formula-row">
+        （損失水頭 <span class="calc-box" id="pumpLossEcho">-</span> ＋ 実揚程 <span class="calc-box" id="pumpStaticEcho">-</span> ＋ 吐出側必要水頭 <span class="calc-box" id="pumpPressureEcho">-</span>）
+        ×（1 ＋ 余裕率 <span class="calc-box" id="pumpMarginEcho">-</span>％） ＝
+        <span class="calc-box result-value" id="pumpTotalHead">-</span> m
+      </div>
+      <div class="formula-row">
+        ∴ 必要流量　<span class="calc-box result-value" id="pumpFlowResultLmin">-</span> l/分　（<span class="calc-box" id="pumpFlowResultLps">-</span> l/秒）
+      </div>
     </div>
   </div>
 </section>

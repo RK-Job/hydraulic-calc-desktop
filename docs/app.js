@@ -179,6 +179,7 @@ function recalcFixtureTable() {
   document.getElementById("designFlow").textContent = totalQ.toFixed(3);
 
   updateMeterJudge(simult, qLmin * simult);
+  if (typeof recalcPumpTab === "function") recalcPumpTab();
 }
 
 /* ============================================================
@@ -347,6 +348,7 @@ function recalcBlTable() {
 
   document.getElementById("lossHead").textContent = withSafety.toFixed(3);
   updateJudge();
+  if (typeof recalcPumpTab === "function") recalcPumpTab();
 }
 
 function updateJudge() {
@@ -423,6 +425,13 @@ function collectFormData() {
     maxFixtureHeight: document.getElementById("maxFixtureHeight").value,
     minRequiredHead: document.getElementById("minRequiredHead").value,
     blRows,
+    pumpFlowSource: document.querySelector('input[name="pumpFlowSource"]:checked').value,
+    pumpFlowManual: document.getElementById("pumpFlowManual").value,
+    pumpLossFromBl: document.getElementById("pumpLossFromBl").checked,
+    pumpLossManual: document.getElementById("pumpLossManual").value,
+    pumpStaticHead: document.getElementById("pumpStaticHead").value,
+    pumpRequiredPressure: document.getElementById("pumpRequiredPressure").value,
+    pumpMargin: document.getElementById("pumpMargin").value,
   };
 }
 
@@ -473,8 +482,21 @@ function applyFormData(data) {
   });
   ensureBlRowCount();
 
+  const flowSourceValue = data.pumpFlowSource || "design";
+  const flowSourceEl = document.getElementById(
+    flowSourceValue === "bl" ? "pumpFlowSrcBl" : flowSourceValue === "manual" ? "pumpFlowSrcManual" : "pumpFlowSrcDesign"
+  );
+  flowSourceEl.checked = true;
+  document.getElementById("pumpFlowManual").value = data.pumpFlowManual || "";
+  document.getElementById("pumpLossFromBl").checked = data.pumpLossFromBl !== false;
+  document.getElementById("pumpLossManual").value = data.pumpLossManual || 0;
+  document.getElementById("pumpStaticHead").value = data.pumpStaticHead || 0;
+  document.getElementById("pumpRequiredPressure").value = data.pumpRequiredPressure || 0;
+  document.getElementById("pumpMargin").value = data.pumpMargin || 10;
+
   recalcFixtureTable();
   recalcBlTable();
+  recalcPumpTab();
 }
 
 document.getElementById("exportExcelBtn").addEventListener("click", async () => {
@@ -493,6 +515,64 @@ document.getElementById("exportExcelBtn").addEventListener("click", async () => 
   } catch (err) {
     alert("Excel出力に失敗しました: " + err.message);
   }
+});
+
+/* ============================================================
+   ③ポンプ算定
+   必要流量：①設計流量／②ＢＬ区間①流量／手入力 から選択
+   損失水頭：②ＢＬ計算の合計（安全率込み）／手入力 から選択
+   全揚程＝（損失水頭＋実揚程＋吐出側必要水頭）×（1＋余裕率）
+   ============================================================ */
+function currentDesignFlowLps() {
+  return num(document.getElementById("designFlow").textContent);
+}
+
+function currentBlFirstRowFlowLps() {
+  const firstRow = blTbody.querySelector("tr");
+  return firstRow ? num(firstRow.querySelector(".b-flow").value) : 0;
+}
+
+function currentBlLossWithSafety() {
+  return num(document.getElementById("blWithSafety").textContent);
+}
+
+function recalcPumpTab() {
+  const designFlow = currentDesignFlowLps();
+  const blFlow = currentBlFirstRowFlowLps();
+  document.getElementById("pumpFlowDesignPreview").textContent = designFlow ? designFlow.toFixed(3) : "-";
+  document.getElementById("pumpFlowBlPreview").textContent = blFlow ? blFlow.toFixed(3) : "-";
+
+  const flowSource = document.querySelector('input[name="pumpFlowSource"]:checked').value;
+  let flowLps;
+  if (flowSource === "design") flowLps = designFlow;
+  else if (flowSource === "bl") flowLps = blFlow;
+  else flowLps = num(document.getElementById("pumpFlowManual").value);
+
+  const blLoss = currentBlLossWithSafety();
+  document.getElementById("pumpLossBlPreview").textContent = blLoss ? blLoss.toFixed(3) : "-";
+
+  const useBlLoss = document.getElementById("pumpLossFromBl").checked;
+  const lossHead = useBlLoss ? blLoss : num(document.getElementById("pumpLossManual").value);
+
+  const staticHead = num(document.getElementById("pumpStaticHead").value);
+  const requiredPressure = num(document.getElementById("pumpRequiredPressure").value);
+  const margin = num(document.getElementById("pumpMargin").value);
+
+  document.getElementById("pumpLossEcho").textContent = lossHead.toFixed(3);
+  document.getElementById("pumpStaticEcho").textContent = staticHead.toFixed(3);
+  document.getElementById("pumpPressureEcho").textContent = requiredPressure.toFixed(3);
+  document.getElementById("pumpMarginEcho").textContent = margin.toFixed(0);
+
+  const totalHead = (lossHead + staticHead + requiredPressure) * (1 + margin / 100);
+  document.getElementById("pumpTotalHead").textContent = totalHead.toFixed(3);
+
+  document.getElementById("pumpFlowResultLps").textContent = flowLps.toFixed(3);
+  document.getElementById("pumpFlowResultLmin").textContent = (flowLps * 60).toFixed(2);
+}
+
+document.querySelectorAll('input[name="pumpFlowSource"]').forEach((el) => el.addEventListener("change", recalcPumpTab));
+["pumpFlowManual", "pumpLossFromBl", "pumpLossManual", "pumpStaticHead", "pumpRequiredPressure", "pumpMargin"].forEach((id) => {
+  document.getElementById(id).addEventListener("input", recalcPumpTab);
 });
 
 /* ============================================================
@@ -555,4 +635,5 @@ document.addEventListener("change", scheduleAutoSave);
 rebuildFixtureFloors();
 ensureBlRowCount();
 recalcBlTable();
+recalcPumpTab();
 restoreAutoSave();
