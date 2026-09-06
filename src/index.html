@@ -21,6 +21,7 @@
   <button class="tab-btn active" data-tab="tab-flow">① 設計流量の算定</button>
   <button class="tab-btn" data-tab="tab-bl">② ＢＬ水理計算書</button>
   <button class="tab-btn" data-tab="tab-pump">③ ポンプ算定</button>
+  <button class="tab-btn" data-tab="tab-fu">④ ＦＵ法流量算定</button>
 </nav>
 
 <!-- ============================================================ -->
@@ -201,6 +202,10 @@
         タブ②の区間①流量を使う（<span class="calc-box" id="pumpFlowBlPreview">-</span> l/秒）</label>
     </div>
     <div class="inline-fields">
+      <label><input type="radio" name="pumpFlowSource" id="pumpFlowSrcFu" value="fu">
+        タブ④のＦＵ法流量を使う（<span class="calc-box" id="pumpFlowFuPreview">-</span> l/秒）</label>
+    </div>
+    <div class="inline-fields">
       <label><input type="radio" name="pumpFlowSource" id="pumpFlowSrcManual" value="manual">
         手入力する（<input type="number" id="pumpFlowManual" class="short-input" step="0.001" min="0"> l/秒）</label>
     </div>
@@ -242,6 +247,36 @@
         ∴ 必要流量　<span class="calc-box result-value" id="pumpFlowResultLmin">-</span> l/分　（<span class="calc-box" id="pumpFlowResultLps">-</span> l/秒）
       </div>
     </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- タブ④：ＦＵ法流量算定 -->
+<!-- ============================================================ -->
+<section id="tab-fu" class="tab-panel">
+  <h2>給 水 器 具 負 荷 単 位（Ｆ Ｕ）法 に よ る 流 量 算 定</h2>
+  <p class="note">※換算表は「給水器具負荷単位流量表」（資料P.220〜224、ＦＵ＝1〜999収録）に基づく。ＦＵ＝212の「洗浄タンクが多い場合」原典値262.6は前後の増加傾向から外れるため261.6に補正して収録している。</p>
+
+  <div class="block">
+    <div class="block-title">① 器具給水負荷単位（ＦＵ）の合計を求める</div>
+    <div class="inline-fields">
+      合計ＦＵ値（<input type="number" id="fuTotal" class="short-input" min="1" max="999" step="1"> ）と決定する（1〜999の範囲）
+    </div>
+  </div>
+
+  <div class="block">
+    <div class="block-title">② 器具構成の傾向を選択する</div>
+    <div class="inline-fields">
+      <label><input type="radio" name="fuCurve" id="fuCurveValve" value="valve" checked> 洗浄弁が多い場合</label>
+    </div>
+    <div class="inline-fields">
+      <label><input type="radio" name="fuCurve" id="fuCurveTank" value="tank"> 洗浄タンクが多い場合</label>
+    </div>
+  </div>
+
+  <div class="block result-block">
+    <span class="block-title">∴ 瞬時最大流量</span>
+    <span class="calc-box result-value" id="fuFlowLmin">-</span> l/分　（<span class="calc-box" id="fuFlowLps">-</span> l/秒）
   </div>
 </section>
 

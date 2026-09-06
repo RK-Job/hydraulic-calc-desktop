@@ -432,6 +432,8 @@ function collectFormData() {
     pumpStaticHead: document.getElementById("pumpStaticHead").value,
     pumpRequiredPressure: document.getElementById("pumpRequiredPressure").value,
     pumpMargin: document.getElementById("pumpMargin").value,
+    fuTotal: document.getElementById("fuTotal").value,
+    fuCurve: document.querySelector('input[name="fuCurve"]:checked').value,
   };
 }
 
@@ -483,10 +485,8 @@ function applyFormData(data) {
   ensureBlRowCount();
 
   const flowSourceValue = data.pumpFlowSource || "design";
-  const flowSourceEl = document.getElementById(
-    flowSourceValue === "bl" ? "pumpFlowSrcBl" : flowSourceValue === "manual" ? "pumpFlowSrcManual" : "pumpFlowSrcDesign"
-  );
-  flowSourceEl.checked = true;
+  const flowSourceIdMap = { bl: "pumpFlowSrcBl", fu: "pumpFlowSrcFu", manual: "pumpFlowSrcManual", design: "pumpFlowSrcDesign" };
+  document.getElementById(flowSourceIdMap[flowSourceValue] || "pumpFlowSrcDesign").checked = true;
   document.getElementById("pumpFlowManual").value = data.pumpFlowManual || "";
   document.getElementById("pumpLossFromBl").checked = data.pumpLossFromBl !== false;
   document.getElementById("pumpLossManual").value = data.pumpLossManual || 0;
@@ -494,8 +494,12 @@ function applyFormData(data) {
   document.getElementById("pumpRequiredPressure").value = data.pumpRequiredPressure || 0;
   document.getElementById("pumpMargin").value = data.pumpMargin || 10;
 
+  document.getElementById("fuTotal").value = data.fuTotal || "";
+  document.getElementById(data.fuCurve === "tank" ? "fuCurveTank" : "fuCurveValve").checked = true;
+
   recalcFixtureTable();
   recalcBlTable();
+  recalcFuTab();
   recalcPumpTab();
 }
 
@@ -516,6 +520,29 @@ document.getElementById("exportExcelBtn").addEventListener("click", async () => 
     alert("Excel出力に失敗しました: " + err.message);
   }
 });
+
+/* ============================================================
+   ④ＦＵ法流量算定
+   合計ＦＵ値と器具構成（洗浄弁／洗浄タンク）から、shared/calc.js の
+   換算表（fuFlowLmin）を用いて瞬時最大流量を求める。
+   ============================================================ */
+function recalcFuTab() {
+  const total = num(document.getElementById("fuTotal").value);
+  const curve = document.querySelector('input[name="fuCurve"]:checked').value;
+  const flowLmin = total > 0 ? fuFlowLmin(total, curve) : 0;
+
+  document.getElementById("fuFlowLmin").textContent = flowLmin ? flowLmin.toFixed(1) : "-";
+  document.getElementById("fuFlowLps").textContent = flowLmin ? (flowLmin / 60).toFixed(3) : "-";
+
+  if (typeof recalcPumpTab === "function") recalcPumpTab();
+}
+
+document.getElementById("fuTotal").addEventListener("input", recalcFuTab);
+document.querySelectorAll('input[name="fuCurve"]').forEach((el) => el.addEventListener("change", recalcFuTab));
+
+function currentFuFlowLps() {
+  return num(document.getElementById("fuFlowLps").textContent);
+}
 
 /* ============================================================
    ③ポンプ算定
@@ -539,13 +566,16 @@ function currentBlLossWithSafety() {
 function recalcPumpTab() {
   const designFlow = currentDesignFlowLps();
   const blFlow = currentBlFirstRowFlowLps();
+  const fuFlow = currentFuFlowLps();
   document.getElementById("pumpFlowDesignPreview").textContent = designFlow ? designFlow.toFixed(3) : "-";
   document.getElementById("pumpFlowBlPreview").textContent = blFlow ? blFlow.toFixed(3) : "-";
+  document.getElementById("pumpFlowFuPreview").textContent = fuFlow ? fuFlow.toFixed(3) : "-";
 
   const flowSource = document.querySelector('input[name="pumpFlowSource"]:checked').value;
   let flowLps;
   if (flowSource === "design") flowLps = designFlow;
   else if (flowSource === "bl") flowLps = blFlow;
+  else if (flowSource === "fu") flowLps = fuFlow;
   else flowLps = num(document.getElementById("pumpFlowManual").value);
 
   const blLoss = currentBlLossWithSafety();
@@ -635,5 +665,6 @@ document.addEventListener("change", scheduleAutoSave);
 rebuildFixtureFloors();
 ensureBlRowCount();
 recalcBlTable();
+recalcFuTab();
 recalcPumpTab();
 restoreAutoSave();
