@@ -20,8 +20,8 @@
 <nav class="tabs">
   <button class="tab-btn active" data-tab="tab-flow">① 設計流量の算定</button>
   <button class="tab-btn" data-tab="tab-bl">② ＢＬ水理計算書</button>
-  <button class="tab-btn" data-tab="tab-pump">③ ポンプ算定</button>
-  <button class="tab-btn" data-tab="tab-fu">④ ＦＵ法流量算定</button>
+  <button class="tab-btn" data-tab="tab-fu">③ ＦＵ法流量算定</button>
+  <button class="tab-btn" data-tab="tab-pump">④ ポンプ算定</button>
 </nav>
 
 <!-- ============================================================ -->
@@ -185,7 +185,64 @@
 </section>
 
 <!-- ============================================================ -->
-<!-- タブ③：ポンプ算定 -->
+<!-- タブ③：ＦＵ法流量算定 -->
+<!-- ============================================================ -->
+<section id="tab-fu" class="tab-panel">
+  <h2>給 水 器 具 負 荷 単 位（Ｆ Ｕ）法 に よ る 流 量 算 定</h2>
+  <p class="note">※換算表は「給水器具負荷単位流量表」（資料P.220〜224、ＦＵ＝1〜999収録）に基づく。ＦＵ＝212の「洗浄タンクが多い場合」原典値262.6は前後の増加傾向から外れるため261.6に補正して収録している。</p>
+  <p class="note">※下表のＦＵ値初期値は「建築設備設計基準」（令和6年版）P.37 器具給水負荷単位表（私室用）に基づく。ＦＵ値欄は表内で直接編集できるので、現場条件や版の違いに応じて上書きしてよい。</p>
+
+  <div class="block">
+    <div class="block-title">① 器具給水負荷単位（ＦＵ）の合計を求める</div>
+    <div class="inline-fields">
+      <label><input type="radio" name="fuTotalSource" id="fuTotalSrcTable" value="table" checked> 下の器具表から集計する（タブ①の階数（<span id="fuFloorCountPreview">-</span>階）を使用）</label>
+    </div>
+    <div class="inline-fields">
+      <label><input type="radio" name="fuTotalSource" id="fuTotalSrcManual" value="manual"> 合計ＦＵ値を直接入力する（<input type="number" id="fuTotal" class="short-input" min="1" max="999" step="1"> ）</label>
+    </div>
+  </div>
+
+  <table class="excel-table" id="fuFixtureTable">
+    <thead>
+      <tr>
+        <th rowspan="2">用　　　途</th>
+        <th rowspan="2">ＦＵ値<br>（個当り）</th>
+        <th colspan="4" id="fuGroupHeader">器具個数</th>
+        <th rowspan="2">小計ＦＵ</th>
+      </tr>
+      <tr id="fuFloorHeaderRow">
+        <th>1F</th><th>2F</th><th>3F</th><th>計</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- 行はJSで生成 -->
+    </tbody>
+    <tfoot>
+      <tr class="total-row" id="fuFixtureTotalRow">
+        <td colspan="6">合計ＦＵ値（器具表集計）</td>
+        <td class="calc" id="fuFixtureTotalCell">0</td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <div class="block">
+    <div class="block-title">② 器具構成の傾向を選択する</div>
+    <div class="inline-fields">
+      <label><input type="radio" name="fuCurve" id="fuCurveValve" value="valve" checked> 洗浄弁が多い場合</label>
+    </div>
+    <div class="inline-fields">
+      <label><input type="radio" name="fuCurve" id="fuCurveTank" value="tank"> 洗浄タンクが多い場合</label>
+    </div>
+  </div>
+
+  <div class="block result-block">
+    <span class="block-title">∴ 瞬時最大流量</span>
+    <span class="calc-box result-value" id="fuFlowLmin">-</span> l/分　（<span class="calc-box" id="fuFlowLps">-</span> l/秒）
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- タブ④：ポンプ算定 -->
 <!-- ============================================================ -->
 <section id="tab-pump" class="tab-panel">
   <h2>ポ ン プ 算 定</h2>
@@ -203,7 +260,7 @@
     </div>
     <div class="inline-fields">
       <label><input type="radio" name="pumpFlowSource" id="pumpFlowSrcFu" value="fu">
-        タブ④のＦＵ法流量を使う（<span class="calc-box" id="pumpFlowFuPreview">-</span> l/秒）</label>
+        タブ③のＦＵ法流量を使う（<span class="calc-box" id="pumpFlowFuPreview">-</span> l/秒）</label>
     </div>
     <div class="inline-fields">
       <label><input type="radio" name="pumpFlowSource" id="pumpFlowSrcManual" value="manual">
@@ -247,36 +304,6 @@
         ∴ 必要流量　<span class="calc-box result-value" id="pumpFlowResultLmin">-</span> l/分　（<span class="calc-box" id="pumpFlowResultLps">-</span> l/秒）
       </div>
     </div>
-  </div>
-</section>
-
-<!-- ============================================================ -->
-<!-- タブ④：ＦＵ法流量算定 -->
-<!-- ============================================================ -->
-<section id="tab-fu" class="tab-panel">
-  <h2>給 水 器 具 負 荷 単 位（Ｆ Ｕ）法 に よ る 流 量 算 定</h2>
-  <p class="note">※換算表は「給水器具負荷単位流量表」（資料P.220〜224、ＦＵ＝1〜999収録）に基づく。ＦＵ＝212の「洗浄タンクが多い場合」原典値262.6は前後の増加傾向から外れるため261.6に補正して収録している。</p>
-
-  <div class="block">
-    <div class="block-title">① 器具給水負荷単位（ＦＵ）の合計を求める</div>
-    <div class="inline-fields">
-      合計ＦＵ値（<input type="number" id="fuTotal" class="short-input" min="1" max="999" step="1"> ）と決定する（1〜999の範囲）
-    </div>
-  </div>
-
-  <div class="block">
-    <div class="block-title">② 器具構成の傾向を選択する</div>
-    <div class="inline-fields">
-      <label><input type="radio" name="fuCurve" id="fuCurveValve" value="valve" checked> 洗浄弁が多い場合</label>
-    </div>
-    <div class="inline-fields">
-      <label><input type="radio" name="fuCurve" id="fuCurveTank" value="tank"> 洗浄タンクが多い場合</label>
-    </div>
-  </div>
-
-  <div class="block result-block">
-    <span class="block-title">∴ 瞬時最大流量</span>
-    <span class="calc-box result-value" id="fuFlowLmin">-</span> l/分　（<span class="calc-box" id="fuFlowLps">-</span> l/秒）
   </div>
 </section>
 

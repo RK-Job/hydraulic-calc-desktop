@@ -432,8 +432,14 @@ function collectFormData() {
     pumpStaticHead: document.getElementById("pumpStaticHead").value,
     pumpRequiredPressure: document.getElementById("pumpRequiredPressure").value,
     pumpMargin: document.getElementById("pumpMargin").value,
+    fuTotalSource: document.querySelector('input[name="fuTotalSource"]:checked').value,
     fuTotal: document.getElementById("fuTotal").value,
     fuCurve: document.querySelector('input[name="fuCurve"]:checked').value,
+    fuFixtures: Array.from(fuFixtureTbody.querySelectorAll("tr")).map((tr) => ({
+      name: tr.querySelector(".fu-name").value,
+      fuValue: tr.querySelector(".fu-value").value,
+      countValues: Array.from(tr.querySelectorAll(".fu-count")).map((el) => el.value),
+    })),
   };
 }
 
@@ -494,8 +500,21 @@ function applyFormData(data) {
   document.getElementById("pumpRequiredPressure").value = data.pumpRequiredPressure || 0;
   document.getElementById("pumpMargin").value = data.pumpMargin || 10;
 
+  document.getElementById(data.fuTotalSource === "manual" ? "fuTotalSrcManual" : "fuTotalSrcTable").checked = true;
   document.getElementById("fuTotal").value = data.fuTotal || "";
   document.getElementById(data.fuCurve === "tank" ? "fuCurveTank" : "fuCurveValve").checked = true;
+
+  rebuildFuFixtureFloors();
+  const fuRows = Array.from(fuFixtureTbody.querySelectorAll("tr"));
+  (data.fuFixtures || []).forEach((f, i) => {
+    const tr = fuRows[i];
+    if (!tr) return;
+    tr.querySelector(".fu-name").value = f.name || "";
+    tr.querySelector(".fu-value").value = f.fuValue || "";
+    Array.from(tr.querySelectorAll(".fu-count")).forEach((el, fi) => {
+      el.value = (f.countValues && f.countValues[fi]) || "";
+    });
+  });
 
   recalcFixtureTable();
   recalcBlTable();
@@ -522,12 +541,93 @@ document.getElementById("exportExcelBtn").addEventListener("click", async () => 
 });
 
 /* ============================================================
-   ④ＦＵ法流量算定
-   合計ＦＵ値と器具構成（洗浄弁／洗浄タンク）から、shared/calc.js の
-   換算表（fuFlowLmin）を用いて瞬時最大流量を求める。
+   ③ＦＵ法流量算定
+   器具表（タブ①と同じ階数）から合計ＦＵ値を集計し、器具構成
+   （洗浄弁／洗浄タンク）に応じて shared/calc.js の換算表
+   （fuFlowLmin）から瞬時最大流量を求める。合計ＦＵ値は器具表からの
+   集計に代えて直接入力することもできる。
    ============================================================ */
+/* ＦＵ初期値（私室用）出典：「建築設備設計基準」（令和6年版）P.37
+   器具給水負荷単位表。reference/fu_fixture_units_draft.csv で確認・修正した値。
+   タブ①の用途名と対応しないもの（洗濯機・ガス給湯器）は初期値なし（空欄）。 */
+const FU_PRESET_BY_NAME = {
+  "台所流し": 3,
+  "大便器（ＬＴ）": 3,
+  "小便器": 3,
+  "浴槽": 2,
+  "シャワー": 2,
+  "洗面器": 1,
+  "散水": 5,
+  "掃除流し": 3,
+  "手洗い": 0.5,
+};
+const FU_FIXTURE_ROWS = 8;
+const fuFixtureTbody = document.querySelector("#fuFixtureTable tbody");
+
+function buildFuFixtureRow(name, fuValue, floors, countValues) {
+  return `
+    <td><input type="text" class="fu-name" value="${name || ""}" placeholder="用途"></td>
+    <td><input type="number" class="fu-value" value="${fuValue || ""}" step="0.1" min="0"></td>
+    ${buildFloorCells("fu-count", floors, countValues)}
+    <td class="calc fu-subtotal">-</td>
+  `;
+}
+
+function rebuildFuFixtureFloors() {
+  const floors = currentFloorCount();
+  document.getElementById("fuFloorCountPreview").textContent = floors;
+  document.getElementById("fuGroupHeader").colSpan = floors + 1;
+
+  let floorHeaderHtml = "";
+  for (let f = 1; f <= floors; f++) floorHeaderHtml += `<th>${f}F</th>`;
+  floorHeaderHtml += "<th>計</th>";
+  document.getElementById("fuFloorHeaderRow").innerHTML = floorHeaderHtml;
+  document.querySelector("#fuFixtureTotalRow td:first-child").colSpan = floors + 3;
+
+  const rows = fuFixtureTbody.querySelectorAll("tr");
+  if (rows.length === 0) {
+    FIXTURES.forEach((f) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = buildFuFixtureRow(f.name, FU_PRESET_BY_NAME[f.name] || "", floors);
+      fuFixtureTbody.appendChild(tr);
+    });
+    for (let i = FIXTURES.length; i < FU_FIXTURE_ROWS; i++) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = buildFuFixtureRow("", "", floors);
+      fuFixtureTbody.appendChild(tr);
+    }
+  } else {
+    rows.forEach((tr) => {
+      const name = tr.querySelector(".fu-name").value;
+      const fuValue = tr.querySelector(".fu-value").value;
+      const countValues = Array.from(tr.querySelectorAll(".fu-count")).map((el) => el.value);
+      tr.innerHTML = buildFuFixtureRow(name, fuValue, floors, countValues);
+    });
+  }
+
+  recalcFuTab();
+}
+
+function recalcFuFixtureTable() {
+  let total = 0;
+  fuFixtureTbody.querySelectorAll("tr").forEach((tr) => {
+    const fuValue = num(tr.querySelector(".fu-value").value);
+    let count = 0;
+    tr.querySelectorAll(".fu-count").forEach((el) => { count += num(el.value); });
+    tr.querySelector(".fu-count-total").textContent = count || "";
+    const subtotal = fuValue * count;
+    tr.querySelector(".fu-subtotal").textContent = subtotal ? subtotal.toFixed(1) : "-";
+    total += subtotal;
+  });
+  document.getElementById("fuFixtureTotalCell").textContent = total.toFixed(1);
+  return total;
+}
+
 function recalcFuTab() {
-  const total = num(document.getElementById("fuTotal").value);
+  const tableTotal = recalcFuFixtureTable();
+  const source = document.querySelector('input[name="fuTotalSource"]:checked').value;
+  const total = source === "manual" ? num(document.getElementById("fuTotal").value) : tableTotal;
+
   const curve = document.querySelector('input[name="fuCurve"]:checked').value;
   const flowLmin = total > 0 ? fuFlowLmin(total, curve) : 0;
 
@@ -537,15 +637,18 @@ function recalcFuTab() {
   if (typeof recalcPumpTab === "function") recalcPumpTab();
 }
 
+fuFixtureTbody.addEventListener("input", recalcFuTab);
 document.getElementById("fuTotal").addEventListener("input", recalcFuTab);
+document.querySelectorAll('input[name="fuTotalSource"]').forEach((el) => el.addEventListener("change", recalcFuTab));
 document.querySelectorAll('input[name="fuCurve"]').forEach((el) => el.addEventListener("change", recalcFuTab));
+floorCountInput.addEventListener("change", rebuildFuFixtureFloors);
 
 function currentFuFlowLps() {
   return num(document.getElementById("fuFlowLps").textContent);
 }
 
 /* ============================================================
-   ③ポンプ算定
+   ④ポンプ算定
    必要流量：①設計流量／②ＢＬ区間①流量／手入力 から選択
    損失水頭：②ＢＬ計算の合計（安全率込み）／手入力 から選択
    全揚程＝（損失水頭＋実揚程＋吐出側必要水頭）×（1＋余裕率）
@@ -665,6 +768,6 @@ document.addEventListener("change", scheduleAutoSave);
 rebuildFixtureFloors();
 ensureBlRowCount();
 recalcBlTable();
-recalcFuTab();
+rebuildFuFixtureFloors();
 recalcPumpTab();
 restoreAutoSave();
